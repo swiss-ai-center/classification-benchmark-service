@@ -69,7 +69,7 @@ class MyService(Service):
     def process(self, data):
 
         raw = str(data["dataset"].data)
-        raw = raw.replace('\\n', '\n').replace('\\r', '\n').replace("b'","")
+        raw = raw.replace('\\n', '\n').replace('\\r', '\n').replace("b'", "")
         data_df = pd.read_csv(io.StringIO(raw),sep=';')
 
         X = data_df.drop("target", axis=1)

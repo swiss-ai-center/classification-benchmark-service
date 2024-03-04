@@ -14,20 +14,26 @@ from common_code.tasks.service import TasksService
 from common_code.tasks.models import TaskData
 from common_code.service.models import Service
 from common_code.service.enums import ServiceStatus
-from common_code.common.enums import FieldDescriptionType, ExecutionUnitTagName, ExecutionUnitTagAcronym
+from common_code.common.enums import (
+    FieldDescriptionType,
+    ExecutionUnitTagName,
+    ExecutionUnitTagAcronym,
+)
 from common_code.common.models import FieldDescription, ExecutionUnitTag
 from contextlib import asynccontextmanager
 
 # Imports required by the service's model
-# TODO: 1. ADD REQUIRED IMPORTS (ALSO IN THE REQUIREMENTS.TXT)
+import pandas as pd
+from lazypredict.Supervised import LazyClassifier
+from sklearn.model_selection import train_test_split
+import io
 
 settings = get_settings()
 
 
 class MyService(Service):
-    # TODO: 2. CHANGE THIS DESCRIPTION
     """
-    My service model
+    Benchmark multiple models on a dataset and return the results.
     """
 
     # Any additional fields must be excluded for Pydantic to work
@@ -36,32 +42,22 @@ class MyService(Service):
 
     def __init__(self):
         super().__init__(
-            # TODO: 3. CHANGE THE SERVICE NAME AND SLUG
-            name="My Service",
-            slug="my-service",
+            name="Classification Benchmark",
+            slug="classification-benchmark",
             url=settings.service_url,
             summary=api_summary,
             description=api_description,
             status=ServiceStatus.AVAILABLE,
-            # TODO: 4. CHANGE THE INPUT AND OUTPUT FIELDS, THE TAGS AND THE HAS_AI VARIABLE
             data_in_fields=[
-                FieldDescription(
-                    name="image",
-                    type=[
-                        FieldDescriptionType.IMAGE_PNG,
-                        FieldDescriptionType.IMAGE_JPEG,
-                    ],
-                ),
+                FieldDescription(name="dataset", type=[FieldDescriptionType.TEXT_CSV]),
             ],
             data_out_fields=[
-                FieldDescription(
-                    name="result", type=[FieldDescriptionType.APPLICATION_JSON]
-                ),
+                FieldDescription(name="result", type=[FieldDescriptionType.TEXT_PLAIN]),
             ],
             tags=[
                 ExecutionUnitTag(
-                    name=ExecutionUnitTagName.IMAGE_PROCESSING,
-                    acronym=ExecutionUnitTagAcronym.IMAGE_PROCESSING,
+                    name=ExecutionUnitTagName.DATA_PREPROCESSING,
+                    acronym=ExecutionUnitTagAcronym.DATA_PREPROCESSING,
                 ),
             ],
             has_ai=False,
@@ -70,18 +66,26 @@ class MyService(Service):
         )
         self._logger = get_logger(settings)
 
-    # TODO: 5. CHANGE THE PROCESS METHOD (CORE OF THE SERVICE)
     def process(self, data):
-        # NOTE that the data is a dictionary with the keys being the field names set in the data_in_fields
-        # The objects in the data variable are always bytes. It is necessary to convert them to the desired type
-        # before using them.
-        # raw = data["image"].data
-        # input_type = data["image"].type
-        # ... do something with the raw data
 
-        # NOTE that the result must be a dictionary with the keys being the field names set in the data_out_fields
+        raw = str(data["dataset"].data)
+        raw = raw.replace('\\n', '\n').replace('\\r', '\n').replace("b'","")
+        data_df = pd.read_csv(io.StringIO(raw),sep=';')
+
+        X = data_df.drop("target", axis=1)
+        y = data_df["target"]
+        self._logger.info(y)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        clf = LazyClassifier(verbose=0, custom_metric=None)
+        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+
+        buf = io.BytesIO()
+        buf.write(models.to_string().encode("utf-8"))
+
         return {
-            "result": TaskData(data=..., type=FieldDescriptionType.APPLICATION_JSON)
+            "result": TaskData(data=buf.getvalue(), type=FieldDescriptionType.TEXT_PLAIN),
         }
 
 
@@ -115,7 +119,9 @@ async def lifespan(app: FastAPI):
         for engine_url in settings.engine_urls:
             announced = False
             while not announced and retries > 0:
-                announced = await service_service.announce_service(my_service, engine_url)
+                announced = await service_service.announce_service(
+                    my_service, engine_url
+                )
                 retries -= 1
                 if not announced:
                     time.sleep(settings.engine_announce_retry_delay)
@@ -135,19 +141,17 @@ async def lifespan(app: FastAPI):
         await service_service.graceful_shutdown(my_service, engine_url)
 
 
-# TODO: 6. CHANGE THE API DESCRIPTION AND SUMMARY
-api_description = """My service
-bla bla bla...
+api_description = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
+In order for the service to work your dataset label column must be called "target"
 """
-api_summary = """My service
-bla bla bla...
+api_summary = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
+In order for the service to work your dataset label column must be called "target"
 """
 
 # Define the FastAPI application with information
-# TODO: 7. CHANGE THE API TITLE, VERSION, CONTACT AND LICENSE
 app = FastAPI(
     lifespan=lifespan,
-    title="Sample Service API.",
+    title="Classification benchmark API.",
     description=api_description,
     version="0.0.1",
     contact={

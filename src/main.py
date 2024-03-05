@@ -75,11 +75,16 @@ class MyService(Service):
             .replace("\\r", "\n")
             .replace("b'", "")
         )
-        data_df = pd.read_csv(io.StringIO(raw), sep=";")
 
+        lines = raw.splitlines()
+        if lines[-1] == "" or lines[-1] == "'":
+            lines.pop()
+        raw = "\n".join(lines)
+        self._logger.info(raw)
+        data_df = pd.read_csv(io.StringIO(raw), sep=";")
+        self._logger.info(data_df)
         X = data_df.drop("target", axis=1)
         y = data_df["target"]
-        self._logger.info(y)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
         )
@@ -151,10 +156,12 @@ async def lifespan(app: FastAPI):
 api_description = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
 In order for the service to work your dataset label column must be called "target".
 Also to improve the results you may want to remove uneccessary columns from the dataset.
+Finally, avoid having multiple empty lines at the end of the file.
 """
 api_summary = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
 In order for the service to work your dataset label column must be called "target".
 Also to improve the results you may want to remove uneccessary columns from the dataset.
+Finally, avoid having multiple empty lines at the end of the file.
 """
 
 # Define the FastAPI application with information

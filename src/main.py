@@ -67,8 +67,7 @@ class MyService(Service):
         self._logger = get_logger(settings)
 
     def process(self, data):
-
-        raw = str(data["dataset"].data)
+        raw = str(data["dataset"].data.decode("utf-8-sig").encode("utf-8"))
         raw = (
             raw.replace(",", ";")
             .replace("\\n", "\n")
@@ -88,6 +87,7 @@ class MyService(Service):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
         )
+
         clf = LazyClassifier(verbose=0, custom_metric=None)
         models, predictions = clf.fit(X_train, X_test, y_train, y_test)
 

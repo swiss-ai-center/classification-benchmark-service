@@ -69,8 +69,13 @@ class MyService(Service):
     def process(self, data):
 
         raw = str(data["dataset"].data)
-        raw = raw.replace('\\n', '\n').replace('\\r', '\n').replace("b'", "")
-        data_df = pd.read_csv(io.StringIO(raw), sep=';')
+        raw = (
+            raw.replace(",", ";")
+            .replace("\\n", "\n")
+            .replace("\\r", "\n")
+            .replace("b'", "")
+        )
+        data_df = pd.read_csv(io.StringIO(raw), sep=";")
 
         X = data_df.drop("target", axis=1)
         y = data_df["target"]
@@ -85,7 +90,9 @@ class MyService(Service):
         buf.write(models.to_string().encode("utf-8"))
 
         return {
-            "result": TaskData(data=buf.getvalue(), type=FieldDescriptionType.TEXT_PLAIN),
+            "result": TaskData(
+                data=buf.getvalue(), type=FieldDescriptionType.TEXT_PLAIN
+            ),
         }
 
 
@@ -142,10 +149,12 @@ async def lifespan(app: FastAPI):
 
 
 api_description = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
-In order for the service to work your dataset label column must be called "target"
+In order for the service to work your dataset label column must be called "target".
+Also to improve the results you may want to remove uneccessary columns from the dataset.
 """
 api_summary = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
-In order for the service to work your dataset label column must be called "target"
+In order for the service to work your dataset label column must be called "target".
+Also to improve the results you may want to remove uneccessary columns from the dataset.
 """
 
 # Define the FastAPI application with information

@@ -80,9 +80,9 @@ class MyService(Service):
         if lines[-1] == "" or lines[-1] == "'":
             lines.pop()
         raw = "\n".join(lines)
-        self._logger.info(raw)
+
         data_df = pd.read_csv(io.StringIO(raw), sep=";")
-        self._logger.info(data_df)
+
         X = data_df.drop("target", axis=1)
         y = data_df["target"]
         X_train, X_test, y_train, y_test = train_test_split(

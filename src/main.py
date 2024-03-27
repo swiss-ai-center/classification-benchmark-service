@@ -24,7 +24,7 @@ from contextlib import asynccontextmanager
 
 # Imports required by the service's model
 import pandas as pd
-from lazypredict.Supervised import LazyClassifier
+from lazypredict import LazyClassifier
 from sklearn.model_selection import train_test_split
 import io
 

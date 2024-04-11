@@ -1,2 +1,2 @@
 common-code[test] @ git+https://github.com/swiss-ai-center/common-code.git@main
-lazypredict-nightly==0.3.0
+lazypredict-nightly==0.3.2

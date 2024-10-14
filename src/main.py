@@ -159,9 +159,6 @@ Also to improve the results you may want to remove uneccessary columns from the 
 Finally, avoid having multiple empty lines at the end of the file.
 """
 api_summary = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
-In order for the service to work your dataset label column must be called "target".
-Also to improve the results you may want to remove uneccessary columns from the dataset.
-Finally, avoid having multiple empty lines at the end of the file.
 """
 
 # Define the FastAPI application with information

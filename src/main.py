@@ -61,8 +61,7 @@ class MyService(Service):
                 ),
             ],
             has_ai=False,
-            # OPTIONAL: CHANGE THE DOCS URL TO YOUR SERVICE'S DOCS
-            docs_url="https://docs.swiss-ai-center.ch/reference/core-concepts/service/",
+            docs_url="https://docs.swiss-ai-center.ch/reference/services/classification-benchmark/",
         )
         self._logger = get_logger(settings)
 
@@ -155,7 +154,7 @@ async def lifespan(app: FastAPI):
 
 api_description = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
 In order for the service to work your dataset label column must be called "target".
-Also to improve the results you may want to remove uneccessary columns from the dataset.
+Also to improve the results you may want to remove unneccessary columns from the dataset.
 Finally, avoid having multiple empty lines at the end of the file.
 """
 api_summary = """This service benchmarks a dataset with various models and outputs the results sorted by accuracy.
